@@ -26,7 +26,15 @@ export async function POST(req: NextRequest) {
   }
   const { name, email, password, companyName } = parsed.data;
 
-  await dbConnect();
+  try {
+    await dbConnect();
+  } catch (e) {
+    return error(
+      "Database unavailable — check MONGODB_URI (see /api/health for details)",
+      503,
+      { detail: String(e instanceof Error ? e.message : e).slice(0, 300) }
+    );
+  }
   const exists = await User.findOne({ email: email.toLowerCase() });
   if (exists) return error("An account with this email already exists.", 409);
 

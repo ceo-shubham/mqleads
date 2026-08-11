@@ -21,7 +21,15 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return error("Invalid email or password");
 
-  await dbConnect();
+  try {
+    await dbConnect();
+  } catch (e) {
+    return error(
+      "Database unavailable — check MONGODB_URI (see /api/health for details)",
+      503,
+      { detail: String(e instanceof Error ? e.message : e).slice(0, 300) }
+    );
+  }
   const user = await User.findOne({ email: parsed.data.email.toLowerCase() });
   if (!user) return error("Invalid email or password", 401);
 

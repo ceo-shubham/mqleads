@@ -49,7 +49,15 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return error("Invalid event payload");
   const payload = parsed.data;
 
-  await dbConnect();
+  try {
+    await dbConnect();
+  } catch (e) {
+    return error(
+      "Database unavailable — check MONGODB_URI (see /api/health for details)",
+      503,
+      { detail: String(e instanceof Error ? e.message : e).slice(0, 300) }
+    );
+  }
   const site = await SourceConnection.findOne({
     _id: payload.siteId,
     provider: "domain",
