@@ -18,29 +18,30 @@ export default async function DashboardPage() {
   const since7 = new Date(Date.now() - 7 * DAY);
   const since30 = new Date(Date.now() - 30 * DAY);
 
-  const [sources, visitors7, visitors30, leads7, leadsTotal, queries, competitors, recentLeads, recentVisitors] =
+  // Resolve sources + tracking sites once and reuse the ids — avoids 4+ extra
+  // round trips to MongoDB on every dashboard load.
+  const sources = await SourceConnection.find({ companyId: company._id }).lean();
+  const domainConn = sources.find((s) => s.provider === "domain");
+  const siteIds = domainConn ? [domainConn._id] : [];
+
+  const [visitors7, visitors30, leads7, leadsTotal, queries, competitors, recentLeads, recentVisitors, socialCount] =
     await Promise.all([
-      SourceConnection.find({ companyId: company._id }).lean(),
-      Visitor.countDocuments({ siteId: { $in: (await SourceConnection.find({ companyId: company._id, provider: "domain" }).select("_id").lean()).map((s) => s._id) }, lastSeenAt: { $gte: since7 } }),
-      Visitor.countDocuments({ siteId: { $in: (await SourceConnection.find({ companyId: company._id, provider: "domain" }).select("_id").lean()).map((s) => s._id) }, lastSeenAt: { $gte: since30 } }),
+      Visitor.countDocuments({ siteId: { $in: siteIds }, lastSeenAt: { $gte: since7 } }),
+      Visitor.countDocuments({ siteId: { $in: siteIds }, lastSeenAt: { $gte: since30 } }),
       Lead.countDocuments({ companyId: company._id, createdAt: { $gte: since7 } }),
       Lead.countDocuments({ companyId: company._id }),
       SearchQuery.find({ companyId: company._id }).lean(),
       Competitor.countDocuments({ companyId: company._id }),
       Lead.find({ companyId: company._id }).sort({ score: -1, lastSeenAt: -1 }).limit(6).lean(),
-      Visitor.find({ siteId: { $in: (await SourceConnection.find({ companyId: company._id, provider: "domain" }).select("_id").lean()).map((s) => s._id) } })
-        .sort({ lastSeenAt: -1 })
-        .limit(8)
-        .lean(),
+      Visitor.find({ siteId: { $in: siteIds } }).sort({ lastSeenAt: -1 }).limit(8).lean(),
+      Visitor.countDocuments({
+        siteId: { $in: siteIds },
+        lastSeenAt: { $gte: since7 },
+        referrerSource: { $in: ["linkedin", "instagram", "twitter", "facebook", "reddit", "youtube"] },
+      }),
     ]);
 
-  const domainConn = sources.find((s) => s.provider === "domain");
   const connectedCount = sources.filter((s) => s.status === "connected").length;
-  const socialCount = await Visitor.countDocuments({
-    siteId: domainConn?._id,
-    lastSeenAt: { $gte: since7 },
-    referrerSource: { $in: ["linkedin", "instagram", "twitter", "facebook", "reddit", "youtube"] },
-  });
 
   // Aggregate search queries by keyword.
   const queryAgg: Record<string, { clicks: number; impressions: number; position: number }> = {};

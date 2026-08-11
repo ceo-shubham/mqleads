@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+// Indexes are built once (in dev/first connect) and persist in Atlas.
+// Disabling autoIndex avoids index-rebuild work on every serverless cold
+// start, which slows down first requests noticeably.
+mongoose.set("autoIndex", false);
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 declare global {

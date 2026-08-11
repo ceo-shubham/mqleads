@@ -3,12 +3,17 @@ import { dbConnect } from "./db";
 import { getSessionUser } from "./auth";
 import { User, Company, type CompanyDoc, type UserDoc } from "./models";
 
-export function json(data: unknown, status = 200): NextResponse {
-  return NextResponse.json(data, { status });
+export function json(data: unknown, status = 200, headers?: Record<string, string>): NextResponse {
+  return NextResponse.json(data, { status, headers });
 }
 
-export function error(message: string, status = 400, extra?: Record<string, unknown>): NextResponse {
-  return NextResponse.json({ error: message, ...extra }, { status });
+export function error(
+  message: string,
+  status = 400,
+  extra?: Record<string, unknown>,
+  headers?: Record<string, string>
+): NextResponse {
+  return NextResponse.json({ error: message, ...extra }, { status, headers });
 }
 
 /**

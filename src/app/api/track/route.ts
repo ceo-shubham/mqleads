@@ -1,6 +1,19 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { json, error } from "@/lib/api";
+
+// mqleads.js is embedded on third-party sites, so the tracking endpoint
+// must allow cross-origin beacon requests (CORS).
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
 import { dbConnect } from "@/lib/db";
 import { SourceConnection, Visitor, Lead, type VisitorDoc } from "@/lib/models";
 import { applyTrackEvent } from "@/lib/track";
@@ -43,10 +56,10 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return error("Invalid JSON body");
+    return error("Invalid JSON body", 400, undefined, CORS_HEADERS);
   }
   const parsed = eventSchema.safeParse(body);
-  if (!parsed.success) return error("Invalid event payload");
+  if (!parsed.success) return error("Invalid event payload", 400, undefined, CORS_HEADERS);
   const payload = parsed.data;
 
   try {
@@ -55,14 +68,15 @@ export async function POST(req: NextRequest) {
     return error(
       "Database unavailable — check MONGODB_URI (see /api/health for details)",
       503,
-      { detail: String(e instanceof Error ? e.message : e).slice(0, 300) }
+      { detail: String(e instanceof Error ? e.message : e).slice(0, 300) },
+      CORS_HEADERS
     );
   }
   const site = await SourceConnection.findOne({
     _id: payload.siteId,
     provider: "domain",
   }).lean();
-  if (!site) return error("Unknown siteId", 404);
+  if (!site) return error("Unknown siteId", 404, undefined, CORS_HEADERS);
 
   const now = Date.now();
   const existing = await Visitor.findOne({
@@ -120,7 +134,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return json({ ok: true });
+  return json({ ok: true }, 200, CORS_HEADERS);
 }
 
 export const dynamic = "force-dynamic";
