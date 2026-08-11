@@ -24,7 +24,7 @@ export default function TermsPage() {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Terms of Service</h1>
         <p className="mt-2 text-sm text-slate-500">
-          <b>MQLeads</b> (operated by <span className="text-slate-700">[Your Company Name]</span>) — Last
+          <b>MQLeads</b> (operated by <span className="text-slate-700">ZYANIX</span>) — Last
           updated: {lastUpdated}
         </p>
 
@@ -54,7 +54,7 @@ export default function TermsPage() {
               <li>You must provide accurate registration information and keep it up to date.</li>
               <li>You are responsible for safeguarding your password and for all activity under your account.</li>
               <li>One account may not be shared with persons outside your company/agency without our permission.</li>
-              <li>Notify us immediately at <a className="text-indigo-600 hover:underline" href="mailto:support@mqleads.com">support@mqleads.com</a> of any unauthorised use.</li>
+              <li>Notify us immediately at <a className="text-indigo-600 hover:underline" href="mailto:support@zyanix.xyz">support@zyanix.xyz</a> of any unauthorised use.</li>
             </ul>
           </section>
 
@@ -140,9 +140,8 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-2 text-lg font-semibold text-slate-900">12. Governing law</h2>
             <p>
-              These Terms are governed by the laws of <span className="text-slate-700">[Your Country/Jurisdiction]</span>,
-              without regard to conflict-of-law rules. Any disputes shall be subject to the exclusive
-              jurisdiction of the courts of <span className="text-slate-700">[Your City]</span>.
+              These Terms are governed by the laws of <span className="text-slate-700">INDIA</span>,
+              without regard to conflict-of-law rules. Any disputes shall be subject to theexclusive jurisdiction of the courts of <span className="text-slate-700">Shikohabad</span>.
             </p>
           </section>
 
@@ -150,7 +149,7 @@ export default function TermsPage() {
             <h2 className="mb-2 text-lg font-semibold text-slate-900">13. Contact</h2>
             <p>
               Questions? Email{" "}
-              <a className="text-indigo-600 hover:underline" href="mailto:support@mqleads.com">support@mqleads.com</a>.
+              <a className="text-indigo-600 hover:underline" href="mailto:support@zyanix.xyz">support@zyanix.xyz</a>.
             </p>
           </section>
         </div>

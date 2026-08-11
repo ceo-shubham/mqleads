@@ -24,7 +24,7 @@ export default function PrivacyPage() {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Privacy Policy</h1>
         <p className="mt-2 text-sm text-slate-500">
-          <b>MQLeads</b> (operated by <span className="text-slate-700">[Your Company Name]</span>, hereinafter
+          <b>MQLeads</b> (operated by <span className="text-slate-700">ZYANIX</span>, hereinafter
           &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) — Last updated: {lastUpdated}
         </p>
 
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-2">
               To exercise any of these rights, email us at{" "}
-              <a className="text-indigo-600 hover:underline" href="mailto:support@mqleads.com">support@mqleads.com</a>{" "}
+              <a className="text-indigo-600 hover:underline" href="mailto:support@zyanix.xyz">support@zyanix.xyz</a>{" "}
               (or the contact email shown on our site). We respond within 30 days.
             </p>
           </section>
@@ -173,8 +173,8 @@ export default function PrivacyPage() {
             <h2 className="mb-2 text-lg font-semibold text-slate-900">12. Contact</h2>
             <p>
               Questions about this policy? Contact us at{" "}
-              <a className="text-indigo-600 hover:underline" href="mailto:support@mqleads.com">support@mqleads.com</a>{" "}
-              or write to <span className="text-slate-700">[Your Company Address]</span>.
+              <a className="text-indigo-600 hover:underline" href="mailto:support@zyanix.xyz">support@zyanix.xyz</a>{" "}
+              or write to <span className="text-slate-700">ZYANIX, Shikohabad, Uttar Pradesh, INDIA</span>.
             </p>
           </section>
         </div>
