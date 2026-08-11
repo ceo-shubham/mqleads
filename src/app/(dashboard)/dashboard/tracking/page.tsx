@@ -64,7 +64,7 @@ export default async function TrackingPage() {
           <p className="mb-3 text-xs text-slate-500">
             Add it just before <code className="rounded bg-slate-100 px-1">&lt;/body&gt;</code> of every page you
             want to track (or in your tag-manager). If your site runs on Cloudflare, keep the{" "}
-            <code className="rounded bg-slate-100 px-1">data-cfasync="false"</code> attribute so Rocket Loader
+            <code className="rounded bg-slate-100 px-1">data-cfasync=&quot;false&quot;</code> attribute so Rocket Loader
             doesn&apos;t break it.
           </p>
           <div className="flex items-start gap-2">
