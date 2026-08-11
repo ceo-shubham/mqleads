@@ -125,7 +125,9 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} MQLeads
+        © {new Date().getFullYear()} MQLeads ·{" "}
+        <Link href="/privacy" className="hover:underline">Privacy</Link> ·{" "}
+        <Link href="/terms" className="hover:underline">Terms</Link>
       </footer>
     </div>
   );
