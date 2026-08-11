@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
-import { PendingAuth, SourceConnection } from "@/lib/models";
+import { Company, PendingAuth, SourceConnection } from "@/lib/models";
 import { getProvider, exchangeCode, type SocialProviderId } from "@/lib/providers";
 import { encrypt } from "@/lib/crypto";
 
@@ -39,10 +39,12 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   if (!state || !code) return fail("Missing state or code from provider.");
 
   await dbConnect();
+  const company = await Company.findOne({ userId: user._id });
+  if (!company) return fail("No company found for this account — please log in again.");
   const pending = await PendingAuth.findOne({ state, consumedAt: { $exists: false } });
   if (!pending || pending.provider !== providerId) return fail("OAuth state expired — please try again.");
   if (new Date(pending.expiresAt).getTime() < Date.now()) return fail("OAuth link expired — please try again.");
-  if (pending.companyId.toString() !== user._id.toString()) return fail("Session mismatch — please log in again.");
+  if (pending.companyId.toString() !== company._id.toString()) return fail("Session mismatch — please log in again.");
 
   const redirectUri = `${req.nextUrl.origin}/api/sources/${providerId}/callback`;
   let exchanged: { accessToken: string; refreshToken?: string; expiresIn?: number };
