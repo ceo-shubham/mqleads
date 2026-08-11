@@ -15,7 +15,11 @@
  * and, when possible, the profile handle in the referrer URL.
  */
 (function () {
-  var script = document.currentScript;
+  // Cloudflare Rocket Loader can nullify document.currentScript, so fall back
+  // to finding our own script tag by src.
+  var script =
+    document.currentScript ||
+    Array.prototype.slice.call(document.querySelectorAll('script[src*="mqleads.js"]')).pop();
   if (!script) return;
   var siteId = script.getAttribute("data-site-id");
   if (!siteId) return;

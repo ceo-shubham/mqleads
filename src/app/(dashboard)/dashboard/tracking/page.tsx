@@ -27,7 +27,7 @@ export default async function TrackingPage() {
   const conn = await SourceConnection.findOne({ companyId: company._id, provider: "domain" }).lean();
   const origin = appOrigin();
   const snippet = conn
-    ? `<script defer src="${origin}/mqleads.js" data-site-id="${conn._id.toString()}"></script>`
+    ? `<script defer data-cfasync="false" src="${origin}/mqleads.js" data-site-id="${conn._id.toString()}"></script>`
     : "";
 
   const visitors = conn
@@ -63,7 +63,9 @@ export default async function TrackingPage() {
           <h2 className="mb-1 text-sm font-semibold text-slate-900">1. Paste this snippet</h2>
           <p className="mb-3 text-xs text-slate-500">
             Add it just before <code className="rounded bg-slate-100 px-1">&lt;/body&gt;</code> of every page you
-            want to track (or in your tag-manager).
+            want to track (or in your tag-manager). If your site runs on Cloudflare, keep the{" "}
+            <code className="rounded bg-slate-100 px-1">data-cfasync="false"</code> attribute so Rocket Loader
+            doesn&apos;t break it.
           </p>
           <div className="flex items-start gap-2">
             <pre className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-emerald-300">

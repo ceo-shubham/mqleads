@@ -80,8 +80,10 @@ Notes:
 After adding + verifying your domain, Tracking gives you:
 
 ```html
-<script defer src="https://<your-app>/mqleads.js" data-site-id="YOUR_SITE_ID"></script>
+<script defer data-cfasync="false" src="https://<your-app>/mqleads.js" data-site-id="YOUR_SITE_ID"></script>
 ```
+
+> Cloudflare users: keep `data-cfasync="false"` so Rocket Loader doesn't break the script.
 
 The script sends page views, time-on-site, and outbound clicks to `/api/track` via `sendBeacon`. The server parses the **referrer**:
 
