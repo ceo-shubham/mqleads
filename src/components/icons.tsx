@@ -77,6 +77,23 @@ export function IconX({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function IconEye({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className={className} aria-hidden="true">
+      <path d="M2 10s3.5-5.5 8-5.5S18 10 18 10s-3.5 5.5-8 5.5S2 10 2 10Z" />
+      <circle cx="10" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+export function IconEyeOff({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className={className} aria-hidden="true">
+      <path d="m3 3 14 14M6.5 6.5C4.8 7.6 3.2 9.2 2 10s3.5 5.5 8 5.5c1.5 0 2.9-.4 4.1-1.1M10.9 5.2c.4 0 .7.1 1.1.1C15.9 6 18 10 18 10c-.5.8-1.3 1.8-2.2 2.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function IconCopy({ className = "h-4 w-4" }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={className} aria-hidden="true">

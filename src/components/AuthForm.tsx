@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { IconEye, IconEyeOff } from "./icons";
 
 type Mode = "login" | "register";
 
@@ -12,6 +13,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const isLogin = mode === "login";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -61,7 +63,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           {!isLogin && (
             <div>
               <label className="label" htmlFor="name">Your name</label>
-              <input id="name" name="name" required minLength={2} className="input" placeholder="Rahul Sharma" />
+              <input id="name" name="name" required minLength={2} className="input" placeholder="Shubham Pathak" />
             </div>
           )}
           <div>
@@ -73,18 +75,44 @@ export function AuthForm({ mode }: { mode: Mode }) {
               name="companyName"
               required={!isLogin}
               className="input"
-              placeholder="Acme Marketing Agency"
+              placeholder="ZYANIX"
             />
           </div>
           <div>
             <label className="label" htmlFor="email">Work email</label>
-            <input id="email" name="email" type="email" required className="input" placeholder="you@company.com" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className="input"
+              placeholder="official@zyanix.xyz"
+            />
           </div>
           <div>
             <label className="label" htmlFor="password">
               Password{!isLogin && " (min 8 characters)"}
             </label>
-            <input id="password" name="password" type="password" required minLength={8} className="input" placeholder="••••••••" />
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                className="input pr-11"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           {error && (
