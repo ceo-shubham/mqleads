@@ -44,7 +44,20 @@ export default async function DashboardPage() {
       Visitor.countDocuments({
         siteId: { $in: siteIds },
         lastSeenAt: { $gte: since7 },
-        referrerSource: { $in: ["linkedin", "instagram", "twitter", "facebook", "reddit", "youtube"] },
+        referrerSource: {
+          $in: [
+            "linkedin",
+            "instagram",
+            "twitter",
+            "facebook",
+            "reddit",
+            "youtube",
+            "tiktok",
+            "pinterest",
+            "whatsapp",
+            "telegram",
+          ],
+        },
       }),
     ]);
 

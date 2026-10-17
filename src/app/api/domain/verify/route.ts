@@ -10,12 +10,46 @@ import { SourceConnection } from "@/lib/models";
  *     present in the site's homepage (https first, then http).
  */
 async function checkTxt(domain: string, token: string): Promise<boolean> {
+  // Method 1: System DNS
   try {
     const records = await dnsPromises.resolveTxt(`_mqleads.${domain}`);
-    return records.some((r) => r.join("").includes(token));
+    if (records.some((r) => r.join("").includes(token))) return true;
   } catch {
-    return false;
+    /* fallback to DoH */
   }
+
+  // Method 2: Cloudflare DNS-over-HTTPS (fastest, bypassing local ISP cache lag)
+  try {
+    const res = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=_mqleads.${encodeURIComponent(domain)}&type=TXT`,
+      {
+        headers: { Accept: "application/dns-json" },
+        signal: AbortSignal.timeout(6000),
+      }
+    );
+    if (res.ok) {
+      const data = (await res.json()) as { Answer?: { data?: string }[] };
+      if (data.Answer?.some((a) => a.data?.includes(token))) return true;
+    }
+  } catch {
+    /* fallback to Google DoH */
+  }
+
+  // Method 3: Google DNS-over-HTTPS
+  try {
+    const res = await fetch(
+      `https://dns.google/resolve?name=_mqleads.${encodeURIComponent(domain)}&type=TXT`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (res.ok) {
+      const data = (await res.json()) as { Answer?: { data?: string }[] };
+      if (data.Answer?.some((a) => a.data?.includes(token))) return true;
+    }
+  } catch {
+    /* verification failed across all 3 */
+  }
+
+  return false;
 }
 
 async function fetchHtml(url: string): Promise<string | null> {
@@ -36,7 +70,8 @@ async function checkMeta(domain: string, token: string): Promise<boolean> {
   const html =
     (await fetchHtml(`https://${domain}`)) || (await fetchHtml(`http://${domain}`));
   if (!html) return false;
-  return html.includes(`name="mqleads-site-verification"`) && html.includes(token);
+  const hasMetaName = /name=["']mqleads-site-verification["']/i.test(html);
+  return hasMetaName && html.includes(token);
 }
 
 export async function POST(req: NextRequest) {

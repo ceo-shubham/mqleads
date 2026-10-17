@@ -10,6 +10,9 @@ import { TrackingClient } from "@/components/TrackingClient";
 export const metadata: Metadata = { title: "Tracking Snippet & Setup" };
 
 function appOrigin(): string {
+  if (process.env.APP_URL) {
+    return process.env.APP_URL.trim().replace(/\/$/, "");
+  }
   const h = headers();
   const proto = h.get("x-forwarded-proto") || "http";
   const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
