@@ -1,22 +1,28 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/Toast";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: {
-    default: "MQLeads — Lead generation & competitor intelligence",
+    default: "MQLeads — Visitor Intelligence & Competitor Analysis",
     template: "%s · MQLeads",
   },
   description:
-    "Connect your company's LinkedIn, Instagram, X, YouTube, Facebook, Reddit and domain. See who visits your site from social media, which pages they open, and what competitors are doing that you are not.",
+    "Know who visits your website from social media, track real visitor journeys, score lead intent, and uncover competitor gaps in real time.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={`${inter.variable} scroll-smooth`}>
+      <body className={`${inter.className} font-sans antialiased`}>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

@@ -6,7 +6,7 @@ import { Company, SourceConnection, Competitor } from "@/lib/models";
 import { SOCIAL_PROVIDERS } from "@/lib/providers";
 import { CompetitorsClient, type CompetitorView } from "@/components/CompetitorsClient";
 
-export const metadata: Metadata = { title: "Competitors" };
+export const metadata: Metadata = { title: "Competitors Intelligence" };
 
 export default async function CompetitorsPage() {
   const user = await getSessionUser();
@@ -46,13 +46,14 @@ export default async function CompetitorsPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Competitors</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Add a competitor and MQLeads reads their real website: what they do, which platforms they use, and
-          where you are missing out.
-        </p>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Competitors Radar</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Live web footprint analysis and competitive channel gap detection.
+          </p>
+        </div>
       </div>
       <CompetitorsClient initialCompetitors={views} myPlatforms={myPlatforms} />
     </div>

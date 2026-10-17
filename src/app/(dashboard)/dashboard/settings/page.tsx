@@ -5,7 +5,7 @@ import { dbConnect } from "@/lib/db";
 import { Company } from "@/lib/models";
 import { SettingsClient, type CompanyView } from "@/components/SettingsClient";
 
-export const metadata: Metadata = { title: "Settings" };
+export const metadata: Metadata = { title: "Company Profile & Settings" };
 
 export default async function SettingsPage() {
   const user = await getSessionUser();
@@ -35,12 +35,14 @@ export default async function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Settings</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Your company profile — used for lead enrichment and competitor comparison.
-        </p>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Company Settings</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Manage your organization profile, brand assets, and social channels.
+          </p>
+        </div>
       </div>
       <SettingsClient initialCompany={view} />
     </div>

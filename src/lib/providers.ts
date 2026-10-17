@@ -51,6 +51,13 @@ function hasAll(...names: string[]): boolean {
   return names.every((n) => !!env(n));
 }
 
+const META_VERSION = process.env.META_GRAPH_VERSION || "v21.0";
+
+export function getRedirectUri(origin: string, providerId: string): string {
+  const base = process.env.APP_URL?.trim().replace(/\/$/, "") || origin;
+  return `${base}/api/sources/${providerId}/callback`;
+}
+
 export const OAUTH_PROVIDERS: Record<SocialProviderId, ProviderConfig> = {
   linkedin: {
     id: "linkedin",
@@ -88,15 +95,15 @@ export const OAUTH_PROVIDERS: Record<SocialProviderId, ProviderConfig> = {
     color: "#e1306c",
     clientIdEnv: "META_CLIENT_ID",
     clientSecretEnv: "META_CLIENT_SECRET",
-    authorizeUrl: "https://www.facebook.com/v20.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v20.0/oauth/access_token",
+    authorizeUrl: `https://www.facebook.com/${META_VERSION}/dialog/oauth`,
+    tokenUrl: `https://graph.facebook.com/${META_VERSION}/oauth/access_token`,
     scopes: ["instagram_basic", "pages_show_list"],
     isConfigured: () => hasAll("META_CLIENT_ID", "META_CLIENT_SECRET"),
     missingEnv: () => ["META_CLIENT_ID", "META_CLIENT_SECRET"],
     fetchProfile: async (token) => {
       // Instagram business accounts live under Facebook Pages.
       const res = await fetch(
-        `https://graph.facebook.com/v20.0/me/accounts?fields=name,id,access_token&access_token=${encodeURIComponent(token)}`
+        `https://graph.facebook.com/${META_VERSION}/me/accounts?fields=name,id,access_token&access_token=${encodeURIComponent(token)}`
       );
       if (!res.ok) throw new Error(`Meta /me/accounts failed (${res.status})`);
       const data = (await res.json()) as { data?: { name: string; id: string; access_token: string }[] };
@@ -104,7 +111,7 @@ export const OAUTH_PROVIDERS: Record<SocialProviderId, ProviderConfig> = {
       if (!page) throw new Error("No Facebook Page found on this account");
       // Try to find the Instagram business account linked to the page.
       const igRes = await fetch(
-        `https://graph.facebook.com/v20.0/${page.id}?fields=instagram_business_account{id,username}&access_token=${encodeURIComponent(page.access_token)}`
+        `https://graph.facebook.com/${META_VERSION}/${page.id}?fields=instagram_business_account{id,username}&access_token=${encodeURIComponent(page.access_token)}`
       );
       if (igRes.ok) {
         const ig = (await igRes.json()) as { instagram_business_account?: { id: string; username: string } };
@@ -189,14 +196,14 @@ export const OAUTH_PROVIDERS: Record<SocialProviderId, ProviderConfig> = {
     color: "#1877f2",
     clientIdEnv: "META_CLIENT_ID",
     clientSecretEnv: "META_CLIENT_SECRET",
-    authorizeUrl: "https://www.facebook.com/v20.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v20.0/oauth/access_token",
+    authorizeUrl: `https://www.facebook.com/${META_VERSION}/dialog/oauth`,
+    tokenUrl: `https://graph.facebook.com/${META_VERSION}/oauth/access_token`,
     scopes: ["pages_show_list", "pages_read_engagement"],
     isConfigured: () => hasAll("META_CLIENT_ID", "META_CLIENT_SECRET"),
     missingEnv: () => ["META_CLIENT_ID", "META_CLIENT_SECRET"],
     fetchProfile: async (token) => {
       const res = await fetch(
-        `https://graph.facebook.com/v20.0/me/accounts?fields=name,id,access_token&access_token=${encodeURIComponent(token)}`
+        `https://graph.facebook.com/${META_VERSION}/me/accounts?fields=name,id,access_token&access_token=${encodeURIComponent(token)}`
       );
       if (!res.ok) throw new Error(`Meta /me/accounts failed (${res.status})`);
       const data = (await res.json()) as { data?: { name: string; id: string; access_token: string }[] };
@@ -324,7 +331,10 @@ export async function exchangeCode(
   });
   if (provider.pkce && codeVerifier) body.set("code_verifier", codeVerifier);
 
-  const headers: Record<string, string> = { "Content-Type": "application/x-www-form-urlencoded" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "User-Agent": "mqleads:v1.0 (contact: admin@mqleads.com)",
+  };
   if (provider.basicAuth) {
     const clientId = process.env[provider.clientIdEnv] as string;
     const clientSecret = process.env[provider.clientSecretEnv] as string;
@@ -366,7 +376,10 @@ export async function refreshAccessToken(
     grant_type: "refresh_token",
     refresh_token: refreshToken,
   });
-  const headers: Record<string, string> = { "Content-Type": "application/x-www-form-urlencoded" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "User-Agent": "mqleads:v1.0 (contact: admin@mqleads.com)",
+  };
   if (provider.basicAuth) {
     headers.Authorization = `Basic ${Buffer.from(
       `${process.env[provider.clientIdEnv]}:${process.env[provider.clientSecretEnv]}`

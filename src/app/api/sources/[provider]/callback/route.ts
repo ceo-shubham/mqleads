@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
 import { Company, PendingAuth, SourceConnection } from "@/lib/models";
-import { getProvider, exchangeCode, type SocialProviderId } from "@/lib/providers";
+import { getProvider, exchangeCode, getRedirectUri, type SocialProviderId } from "@/lib/providers";
 import { encrypt } from "@/lib/crypto";
 
 const ALLOWED: SocialProviderId[] = [
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   if (new Date(pending.expiresAt).getTime() < Date.now()) return fail("OAuth link expired — please try again.");
   if (pending.companyId.toString() !== company._id.toString()) return fail("Session mismatch — please log in again.");
 
-  const redirectUri = `${req.nextUrl.origin}/api/sources/${providerId}/callback`;
+  const redirectUri = getRedirectUri(req.nextUrl.origin, providerId);
   let exchanged: { accessToken: string; refreshToken?: string; expiresIn?: number };
   try {
     exchanged = await exchangeCode(provider, code, redirectUri, pending.codeVerifier);

@@ -5,7 +5,7 @@ import { dbConnect } from "@/lib/db";
 import { Company, Lead, type VisitorEvent } from "@/lib/models";
 import { LeadsClient, type LeadView } from "@/components/LeadsClient";
 
-export const metadata: Metadata = { title: "Leads" };
+export const metadata: Metadata = { title: "Leads Pipeline" };
 
 export default async function LeadsPage() {
   const user = await getSessionUser();
@@ -24,6 +24,8 @@ export default async function LeadsPage() {
     landingPage: l.landingPage,
     referrerUrl: l.referrerUrl,
     utmSource: l.utmSource,
+    utmCampaign: l.utmCampaign,
+    utmMedium: l.utmMedium,
     pageViews: l.pageViews,
     timeOnSiteSec: l.timeOnSiteSec,
     score: l.score,
@@ -35,12 +37,14 @@ export default async function LeadsPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Leads</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Everyone who showed interest in your services — scored by intent. Click a row for the full visit timeline.
-        </p>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Leads Pipeline</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Attributed prospects and high-intent website visitors ready for sales outreach.
+          </p>
+        </div>
       </div>
       <LeadsClient initialLeads={views} />
     </div>

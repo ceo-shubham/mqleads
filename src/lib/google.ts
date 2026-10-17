@@ -172,7 +172,8 @@ export async function fetchSiteMeta(rawUrl: string): Promise<SiteMeta> {
       const host = u.hostname.replace(/^www\./, "").toLowerCase();
       for (const name of known) {
         if (host.startsWith(`${name}.`) || host === name || host.endsWith(`.${name}`)) {
-          if (!socials[name]) socials[name] = u.origin + u.pathname;
+          const key = name === "x" ? "twitter" : name;
+          if (!socials[key]) socials[key] = u.origin + u.pathname;
         }
       }
     } catch {

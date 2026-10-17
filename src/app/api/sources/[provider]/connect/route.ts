@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
 import { Company, PendingAuth } from "@/lib/models";
-import { getProvider, buildAuthUrl, type SocialProviderId } from "@/lib/providers";
+import { getProvider, buildAuthUrl, getRedirectUri, type SocialProviderId } from "@/lib/providers";
 import { randomToken } from "@/lib/crypto";
 
 const ALLOWED: SocialProviderId[] = [
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   if (!company) return NextResponse.redirect(new URL("/login", req.url));
 
   const state = randomToken(16);
-  const redirectUri = `${req.nextUrl.origin}/api/sources/${providerId}/callback`;
+  const redirectUri = getRedirectUri(req.nextUrl.origin, providerId);
   const { url, codeVerifier } = buildAuthUrl(provider, state, redirectUri);
 
   await PendingAuth.create({

@@ -5,8 +5,9 @@ import { dbConnect } from "@/lib/db";
 import { Company, SourceConnection } from "@/lib/models";
 import { OAUTH_PROVIDERS, SOCIAL_PROVIDERS } from "@/lib/providers";
 import { SourcesClient, type ProviderMeta, type SourceConnView } from "@/components/SourcesClient";
+import { IconShield } from "@/components/icons";
 
-export const metadata: Metadata = { title: "Sources" };
+export const metadata: Metadata = { title: "Connected Sources & Channels" };
 
 export default async function SourcesPage({
   searchParams,
@@ -49,16 +50,18 @@ export default async function SourcesPage({
   const searchConsoleConn = connections.find((c) => c.provider === "search-console");
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Sources</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Connect your company&apos;s channels. Everything is stored encrypted and read-only.
-        </p>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Connected Sources</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Link your company channels for automated profile attribution and search keyword intelligence.
+          </p>
+        </div>
       </div>
 
       {searchParams.error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <b>Connection failed:</b>{" "}
           {searchParams.error === "not-configured"
             ? `Missing keys (${searchParams.missing || "see .env"}) for ${searchParams.provider}.`
@@ -66,9 +69,9 @@ export default async function SourcesPage({
         </div>
       )}
       {searchParams.connected && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
           🎉 {searchParams.connected === "search-console" ? "Google Search Console" : "Source"} connected
-          successfully. It will appear in your dashboard.
+          successfully. Signals are now live in your workspace.
         </div>
       )}
 
@@ -78,17 +81,16 @@ export default async function SourcesPage({
         searchConsole={searchConsoleConn ? view(searchConsoleConn) : null}
       />
 
-      <div className="card p-5">
-        <h3 className="text-sm font-semibold text-slate-900">About the connections</h3>
-        <ul className="mt-3 space-y-2 text-xs text-slate-500">
-          <li>• Access tokens are encrypted at rest with your APP_SECRET and never exposed to the browser.</li>
-          <li>• Scopes are read-only where the platform allows (e.g. YouTube: youtube.readonly).</li>
-          <li>• Google Search Console is provisioned by the MQLeads team — connect with the same Google account that owns your Search Console property.</li>
-          <li>
-            • LinkedIn company-page data needs extra scopes (
-            <code className="rounded bg-slate-100 px-1">r_organization_social</code>) which require LinkedIn app
-            approval — ask us to enable it for your app.
-          </li>
+      <div className="card p-6 border-slate-200 bg-slate-50/50 space-y-3">
+        <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+          <IconShield className="h-4 w-4 text-indigo-600" />
+          <span>Enterprise Token Security &amp; Read-Only Privacy</span>
+        </div>
+        <ul className="grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+          <li>• OAuth access tokens are encrypted with AES-256-GCM at rest and never exposed to the client.</li>
+          <li>• Requested scopes are strictly read-only wherever platforms permit.</li>
+          <li>• Google Search Console sync uses the official webmasters API to read query impressions.</li>
+          <li>• You can disconnect any source at any time with immediate token revocation.</li>
         </ul>
       </div>
     </div>

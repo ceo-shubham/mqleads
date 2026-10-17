@@ -1,13 +1,32 @@
+import React from "react";
+
 export function Logo({ className = "h-8 w-8" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
-      <rect width="48" height="48" rx="12" fill="#4f46e5" />
-      <path
-        d="M14 33V15h5.4l9.6 11.1V15H34v18h-5.3L19 21.8V33H14Z"
-        fill="#fff"
-      />
-      <circle cx="37" cy="37" r="5.5" fill="#c7d2fe" />
-      <circle cx="37" cy="37" r="2.5" fill="#4f46e5" />
-    </svg>
+    <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
+      <svg viewBox="0 0 40 40" fill="none" className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mqleads-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#4f46e5" />
+            <stop offset="100%" stopColor="#7c3aed" />
+          </linearGradient>
+          <linearGradient id="glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#818cf8" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#c084fc" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <rect width="40" height="40" rx="10" fill="url(#mqleads-grad)" />
+        <rect x="1" y="1" width="38" height="38" rx="9" stroke="url(#glow-grad)" strokeWidth="1.5" />
+        {/* Modern stylized geometric "M & Q" node network */}
+        <path
+          d="M11 27V13L17 21L23 13V27"
+          stroke="#ffffff"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="28" cy="24" r="4.5" stroke="#ffffff" strokeWidth="2.2" />
+        <path d="M31 27L33.5 29.5" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    </div>
   );
 }

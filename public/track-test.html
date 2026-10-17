@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MQLeads Tracking Test</title>
+</head>
+<body>
+  <h1>MQLeads tracking test page</h1>
+  <p>This page loads the live tracking script (cross-origin, same as zyanix.shop).</p>
+  <div id="status">Waiting for script…</div>
+  <script>
+    window.addEventListener("mqleads:ready", function () {
+      document.getElementById("status").textContent =
+        "✓ mqleads.js loaded & ready — window.MQLeads available: " + (!!window.MQLeads);
+    });
+  </script>
+  <script defer data-cfasync="false" src="https://mqleads.zyanix.xyz/mqleads.js" data-site-id="6a7b208f199ec2ee0c0d81d1"></script>
+</body>
+</html>

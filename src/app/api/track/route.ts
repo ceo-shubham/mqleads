@@ -3,16 +3,23 @@ import { z } from "zod";
 import { json, error } from "@/lib/api";
 
 // mqleads.js is embedded on third-party sites, so the tracking endpoint
-// must allow cross-origin beacon requests (CORS).
-const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Max-Age": "86400",
-};
+// must allow cross-origin beacon requests (CORS). sendBeacon sends with
+// credentials mode "include", which forbids the Access-Control-Allow-Origin
+// wildcard — so we echo the exact Origin and allow credentials.
+function corsHeaders(req: NextRequest): Record<string, string> {
+  const origin = req.headers.get("origin");
+  return {
+    "Access-Control-Allow-Origin": origin || "*",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: corsHeaders(req) });
 }
 import { dbConnect } from "@/lib/db";
 import { SourceConnection, Visitor, Lead, type VisitorDoc } from "@/lib/models";
@@ -52,14 +59,15 @@ const eventSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const headers = corsHeaders(req);
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return error("Invalid JSON body", 400, undefined, CORS_HEADERS);
+    return error("Invalid JSON body", 400, undefined, headers);
   }
   const parsed = eventSchema.safeParse(body);
-  if (!parsed.success) return error("Invalid event payload", 400, undefined, CORS_HEADERS);
+  if (!parsed.success) return error("Invalid event payload", 400, undefined, headers);
   const payload = parsed.data;
 
   try {
@@ -69,14 +77,14 @@ export async function POST(req: NextRequest) {
       "Database unavailable — check MONGODB_URI (see /api/health for details)",
       503,
       { detail: String(e instanceof Error ? e.message : e).slice(0, 300) },
-      CORS_HEADERS
+      headers
     );
   }
   const site = await SourceConnection.findOne({
     _id: payload.siteId,
     provider: "domain",
   }).lean();
-  if (!site) return error("Unknown siteId", 404, undefined, CORS_HEADERS);
+  if (!site) return error("Unknown siteId", 404, undefined, headers);
 
   const now = Date.now();
   const existing = await Visitor.findOne({
@@ -131,10 +139,24 @@ export async function POST(req: NextRequest) {
         lastSeenAt: doc.lastSeenAt,
         events: doc.events.slice(-50),
       });
+    } else {
+      await Lead.updateOne(
+        { _id: existingLead._id },
+        {
+          $set: {
+            score: Math.max(existingLead.score, doc.score),
+            pageViews: doc.pageViews,
+            timeOnSiteSec: doc.timeOnSiteSec,
+            lastSeenAt: doc.lastSeenAt,
+            person: doc.identity ? { ...existingLead.person, ...doc.identity } : existingLead.person,
+            events: doc.events.slice(-50),
+          },
+        }
+      );
     }
   }
 
-  return json({ ok: true }, 200, CORS_HEADERS);
+  return json({ ok: true }, 200, headers);
 }
 
 export const dynamic = "force-dynamic";

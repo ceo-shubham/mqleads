@@ -5,6 +5,15 @@ import { dbConnect } from "@/lib/db";
 import { Company, SourceConnection, Visitor, Lead, SearchQuery, Competitor } from "@/lib/models";
 import { SourceBadge } from "@/components/SourceBadge";
 import { LeadRow } from "@/components/LeadRow";
+import {
+  IconPulse,
+  IconLeads,
+  IconTarget,
+  IconLink,
+  IconSparkles,
+  IconTrendingUp,
+  IconChevronRight,
+} from "@/components/icons";
 
 const DAY = 86400000;
 
@@ -18,13 +27,11 @@ export default async function DashboardPage() {
   const since7 = new Date(Date.now() - 7 * DAY);
   const since30 = new Date(Date.now() - 30 * DAY);
 
-  // Resolve sources + tracking sites once and reuse the ids — avoids 4+ extra
-  // round trips to MongoDB on every dashboard load.
   const sources = await SourceConnection.find({ companyId: company._id }).lean();
   const domainConn = sources.find((s) => s.provider === "domain");
   const siteIds = domainConn ? [domainConn._id] : [];
 
-  const [visitors7, visitors30, leads7, leadsTotal, queries, competitors, recentLeads, recentVisitors, socialCount] =
+  const [visitors7, visitors30, leads7, leadsTotal, queries, competitorsCount, recentLeads, recentVisitors, socialCount] =
     await Promise.all([
       Visitor.countDocuments({ siteId: { $in: siteIds }, lastSeenAt: { $gte: since7 } }),
       Visitor.countDocuments({ siteId: { $in: siteIds }, lastSeenAt: { $gte: since30 } }),
@@ -43,7 +50,7 @@ export default async function DashboardPage() {
 
   const connectedCount = sources.filter((s) => s.status === "connected").length;
 
-  // Aggregate search queries by keyword.
+  // Aggregate search queries by keyword
   const queryAgg: Record<string, { clicks: number; impressions: number; position: number }> = {};
   for (const q of queries) {
     const agg = (queryAgg[q.query] ||= { clicks: 0, impressions: 0, position: 0 });
@@ -54,60 +61,151 @@ export default async function DashboardPage() {
   const topQueries = Object.entries(queryAgg)
     .map(([query, v]) => ({ query, ...v }))
     .sort((a, b) => b.clicks - a.clicks)
-    .slice(0, 6);
-
-  const stats = [
-    { label: "Visitors (7d)", value: visitors7 },
-    { label: "From social (7d)", value: socialCount },
-    { label: "New leads (7d)", value: leads7 },
-    { label: "Total leads", value: leadsTotal },
-    { label: "Sources connected", value: `${connectedCount}/7` },
-    { label: "Competitors tracked", value: competitors },
-  ];
+    .slice(0, 5);
 
   const checklist = [
-    { done: connectedCount >= 1, label: "Connect your social sources", href: "/dashboard/sources" },
-    { done: Boolean(domainConn), label: "Add & verify your domain", href: "/dashboard/tracking" },
-    {
-      done: visitors30 > 0,
-      label: "Install the tracking snippet on your site",
-      href: "/dashboard/tracking",
-    },
+    { done: Boolean(domainConn), label: "Connect & verify your domain", href: "/dashboard/tracking" },
+    { done: visitors30 > 0, label: "Install tracking snippet on your website", href: "/dashboard/tracking" },
+    { done: connectedCount >= 1, label: "Link social media sources", href: "/dashboard/sources" },
+    { done: competitorsCount >= 1, label: "Track a competitor domain", href: "/dashboard/competitors" },
     { done: queries.length > 0, label: "Sync Google Search Console", href: "/dashboard/sources" },
   ];
 
+  const completedSteps = checklist.filter((c) => c.done).length;
+  const progressPct = Math.round((completedSteps / checklist.length) * 100);
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Welcome back{user.name ? `, ${user.name.split(" ")[0]}` : ""}
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {company.name} — real signals from your connected sources.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-        {stats.map((s) => (
-          <div key={s.label} className="card p-4">
-            <div className="text-2xl font-bold text-slate-900">{s.value}</div>
-            <div className="mt-1 text-xs font-medium text-slate-500">{s.label}</div>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Top Banner / Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Welcome back, {user.name.split(" ")[0]}
+            </h1>
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulseDot" />
+              Live Monitoring
+            </span>
           </div>
-        ))}
+          <p className="mt-1 text-sm text-slate-500">
+            Real visitor intelligence &amp; competitor gap analysis for <span className="font-semibold text-slate-700">{company.name}</span>.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Link href="/dashboard/leads" className="btn-secondary text-xs sm:text-sm">
+            <IconLeads className="h-4 w-4 text-slate-500" />
+            View Leads Pipeline
+          </Link>
+          <Link href="/dashboard/tracking" className="btn-primary text-xs sm:text-sm shadow-sm">
+            <IconPulse className="h-4 w-4" />
+            Tracking Hub
+          </Link>
+        </div>
       </div>
 
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="card p-4 space-y-1">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider">Visitors (7d)</span>
+            <IconPulse className="h-4 w-4 text-indigo-500" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono text-slate-900">{visitors7}</div>
+          <div className="text-[11px] font-medium text-slate-400">
+            {visitors30} past 30 days
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-1">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider">Social Referrals</span>
+            <IconTrendingUp className="h-4 w-4 text-sky-500" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono text-slate-900">{socialCount}</div>
+          <div className="text-[11px] font-medium text-sky-600">
+            {visitors7 > 0 ? `${Math.round((socialCount / visitors7) * 100)}% of traffic` : "Attributed"}
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-1">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider">New Leads (7d)</span>
+            <IconLeads className="h-4 w-4 text-emerald-500" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono text-slate-900">{leads7}</div>
+          <div className="text-[11px] font-medium text-emerald-600">
+            Score ≥ 25 threshold
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-1">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider">Total Leads</span>
+            <IconSparkles className="h-4 w-4 text-amber-500" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono text-slate-900">{leadsTotal}</div>
+          <div className="text-[11px] font-medium text-slate-400">
+            Active pipeline
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-1">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider">Sources Linked</span>
+            <IconLink className="h-4 w-4 text-violet-500" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono text-slate-900">{connectedCount}/7</div>
+          <div className="text-[11px] font-medium text-violet-600">
+            {7 - connectedCount} available
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-1">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider">Competitors</span>
+            <IconTarget className="h-4 w-4 text-red-500" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono text-slate-900">{competitorsCount}</div>
+          <div className="text-[11px] font-medium text-slate-400">
+            Under surveillance
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid: Leads & Sidebar Widgets */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="card p-5 lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Recent leads</h2>
-            <Link href="/dashboard/leads" className="text-xs font-medium text-indigo-600 hover:underline">
-              View all →
+        {/* Left 2 Cols: High-Intent Recent Leads */}
+        <div className="card p-6 lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Recent Qualified Leads</h2>
+              <p className="text-xs text-slate-400">Visitors automatically scored based on engagement &amp; source.</p>
+            </div>
+            <Link
+              href="/dashboard/leads"
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
+            >
+              View Full Pipeline →
             </Link>
           </div>
+
           {recentLeads.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">
-              No leads yet. Install the tracking snippet or add a lead manually — real leads appear here.
-            </p>
+            <div className="py-12 text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                <IconLeads className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-semibold text-slate-800">No leads captured yet</p>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Once the tracking snippet runs on your site, visitors who arrive from social channels or read multiple pages will appear here.
+              </p>
+              <div className="pt-2">
+                <Link href="/dashboard/tracking" className="btn-primary text-xs">
+                  Install Tracking Snippet
+                </Link>
+              </div>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {recentLeads.map((l) => (
@@ -117,111 +215,173 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        {/* Right 1 Col: Onboarding Checklist & Search Console Queries */}
         <div className="space-y-6">
-          <div className="card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-slate-900">Get started</h2>
-            <ol className="space-y-3">
-              {checklist.map((c, i) => (
+          {/* Quick Setup Checklist */}
+          <div className="card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Workspace Setup</h3>
+                <p className="text-xs text-slate-400">{completedSteps} of {checklist.length} completed</p>
+              </div>
+              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold font-mono text-indigo-700 border border-indigo-100">
+                {progressPct}%
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+
+            <ol className="space-y-2.5 pt-1">
+              {checklist.map((c) => (
                 <li key={c.label}>
-                  <Link href={c.href} className="flex items-start gap-3">
-                    <span
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-                        c.done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {c.done ? "✓" : i + 1}
-                    </span>
-                    <span className={`text-sm ${c.done ? "text-slate-400 line-through" : "text-slate-700"}`}>
-                      {c.label}
-                    </span>
+                  <Link
+                    href={c.href}
+                    className={`flex items-center justify-between rounded-xl p-2.5 text-xs transition-colors ${
+                      c.done
+                        ? "bg-slate-50 text-slate-500 hover:bg-slate-100/80"
+                        : "border border-indigo-100 bg-indigo-50/50 text-indigo-950 font-semibold hover:bg-indigo-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                          c.done
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-indigo-600 text-white"
+                        }`}
+                      >
+                        {c.done ? "✓" : "→"}
+                      </span>
+                      <span className={c.done ? "line-through text-slate-400" : ""}>{c.label}</span>
+                    </div>
+                    <IconChevronRight className="h-3.5 w-3.5 text-slate-400" />
                   </Link>
                 </li>
               ))}
             </ol>
           </div>
 
-          <div className="card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-slate-900">Who is searching for you</h2>
+          {/* Search Console Keywords */}
+          <div className="card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Organic Search Queries</h3>
+                <p className="text-xs text-slate-400">Search keywords finding your site</p>
+              </div>
+              <Link href="/dashboard/sources" className="text-xs font-semibold text-indigo-600 hover:underline">
+                Sync →
+              </Link>
+            </div>
+
             {topQueries.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                Connect Google Search Console and sync to see the queries people use to find you.
-              </p>
+              <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">
+                Connect Google Search Console in Sources to mine search keyword impressions.
+              </div>
             ) : (
-              <table className="w-full text-sm">
-                <tbody>
-                  {topQueries.map((q) => (
-                    <tr key={q.query} className="border-b border-slate-50 last:border-0">
-                      <td className="py-2 pr-2 text-slate-700">{q.query}</td>
-                      <td className="py-2 text-right text-xs text-slate-400">
-                        {q.impressions} imp · pos {q.position.toFixed(1)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="divide-y divide-slate-100">
+                {topQueries.map((q) => (
+                  <div key={q.query} className="flex items-center justify-between py-2 text-xs">
+                    <span className="font-semibold text-slate-700 truncate max-w-[170px]" title={q.query}>
+                      {q.query}
+                    </span>
+                    <div className="text-right text-[11px] text-slate-400 shrink-0 font-mono">
+                      <span className="font-bold text-slate-700">{q.clicks}</span> clicks · pos {q.position.toFixed(1)}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="card p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Latest visitors on your site</h2>
-          <Link href="/dashboard/tracking" className="text-xs font-medium text-indigo-600 hover:underline">
-            Tracking details →
+      {/* Latest Live Visitors Stream */}
+      <div className="card p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-base font-bold text-slate-900">Live Website Visitor Stream</h2>
+            <span className="badge border border-emerald-200/70 bg-emerald-50 text-emerald-700 text-[11px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulseDot" />
+              Real-time
+            </span>
+          </div>
+          <Link href="/dashboard/tracking" className="text-xs font-bold text-indigo-600 hover:underline">
+            Manage Tracking Script →
           </Link>
         </div>
+
         {recentVisitors.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-400">
-            No visits recorded yet. Once the snippet runs on your site, visitors show up here with their
-            social attribution.
-          </p>
+          <div className="py-12 text-center space-y-2">
+            <p className="text-sm font-semibold text-slate-700">No visitors recorded yet</p>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Once you place the tracking code on your website, incoming visits will be streamed live here with their social attribution source.
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-100">
+                <tr className="border-b border-slate-100 bg-slate-50/50">
                   <th className="th">Visitor</th>
-                  <th className="th">Came from</th>
-                  <th className="th">Landing page</th>
-                  <th className="th">Pages</th>
-                  <th className="th">Score</th>
-                  <th className="th">Last seen</th>
+                  <th className="th">Attribution Source</th>
+                  <th className="th">Landing URL</th>
+                  <th className="th text-center">Pages</th>
+                  <th className="th text-center">Score</th>
+                  <th className="th text-right">Last Touch</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
-                {recentVisitors.map((v) => (
-                  <tr key={v._id.toString()}>
-                    <td className="td font-medium text-slate-900">
-                      {v.identity?.name || v.identity?.handle || v.visitorId.slice(0, 8)}
-                      {v.identity?.email && (
-                        <span className="block text-xs font-normal text-slate-400">{v.identity.email}</span>
-                      )}
-                    </td>
-                    <td className="td">
-                      {v.referrerSource ? (
+              <tbody className="divide-y divide-slate-100">
+                {recentVisitors.map((v) => {
+                  const name = v.identity?.name || v.identity?.handle || `Visitor ${v.visitorId.slice(0, 8)}`;
+                  const isHot = v.score >= 25;
+                  return (
+                    <tr key={v._id.toString()} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="td font-medium text-slate-900">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200">
+                            {name[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900 text-xs sm:text-sm">{name}</div>
+                            {v.identity?.email && (
+                              <div className="text-[11px] text-slate-400 font-mono">{v.identity.email}</div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="td">
                         <SourceBadge source={v.referrerSource} />
-                      ) : (
-                        <span className="text-slate-400">direct</span>
-                      )}
-                    </td>
-                    <td className="td max-w-[220px] truncate">{v.landingPage || "/"}</td>
-                    <td className="td">{v.pageViews}</td>
-                    <td className="td">
-                      <span
-                        className={`badge ${
-                          v.score >= 25 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {v.score}
-                      </span>
-                    </td>
-                    <td className="td whitespace-nowrap text-slate-400">
-                      {v.lastSeenAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}{" "}
-                      {v.lastSeenAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="td max-w-[200px] truncate text-xs text-slate-500 font-mono">
+                        {v.landingPage || "/"}
+                      </td>
+                      <td className="td text-center font-mono text-xs font-semibold text-slate-700">
+                        {v.pageViews}
+                      </td>
+                      <td className="td text-center">
+                        <span
+                          className={`badge font-mono ${
+                            isHot
+                              ? "border border-emerald-200/80 bg-emerald-50 text-emerald-700 font-bold"
+                              : "border border-slate-200 bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {v.score} pts
+                        </span>
+                      </td>
+                      <td className="td text-right whitespace-nowrap text-xs text-slate-400 font-mono">
+                        {v.lastSeenAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}{" "}
+                        {v.lastSeenAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
