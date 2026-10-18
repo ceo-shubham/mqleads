@@ -71,7 +71,19 @@ const features = [
   },
 ];
 
-export default function Home() {
+import { getSessionUser } from "@/lib/auth";
+import { dbConnect } from "@/lib/db";
+import { Company } from "@/lib/models";
+
+export default async function Home() {
+  const user = await getSessionUser();
+  let companyName = "";
+  if (user) {
+    await dbConnect();
+    const company = await Company.findOne({ userId: user._id }).lean();
+    if (company) companyName = company.name;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 text-slate-900 selection:bg-indigo-500/20">
       {/* Sticky Top Header */}
@@ -103,12 +115,36 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/login" className="btn-ghost text-xs sm:text-sm font-semibold">
-              Sign In
-            </Link>
-            <Link href="/register" className="btn-primary text-xs sm:text-sm font-semibold">
-              Get Started Free
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1.5 pr-3 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-[11px] font-bold text-white uppercase shadow-sm">
+                    {user.name.charAt(0)}
+                  </div>
+                  <span className="max-w-[110px] truncate text-slate-800 font-bold">{user.name.split(" ")[0]}</span>
+                </Link>
+
+                <Link
+                  href="/dashboard"
+                  className="btn-primary text-xs sm:text-sm font-bold px-3.5 py-1.5 flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>Dashboard</span>
+                  <span className="text-indigo-200">&rarr;</span>
+                </Link>
+              </div>
+            ) : (
+              <>
+                <Link href="/login" className="btn-ghost text-xs sm:text-sm font-semibold">
+                  Sign In
+                </Link>
+                <Link href="/register" className="btn-primary text-xs sm:text-sm font-semibold">
+                  Get Started Free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -120,10 +156,20 @@ export default function Home() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-tr from-indigo-500/15 via-violet-500/10 to-transparent blur-3xl -z-10 pointer-events-none" />
 
           <div className="mx-auto max-w-5xl text-center space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulseDot" />
-              Visitor Intelligence · Social Referrer Attribution · Competitor Radar
-            </div>
+            {user ? (
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/90 bg-emerald-50/90 px-4 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm backdrop-blur-sm">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulseDot" />
+                <span>
+                  Active Session · Welcome back, <strong>{user.name.split(" ")[0]}</strong>
+                  {companyName ? ` (${companyName})` : ""}
+                </span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-sm">
+                <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulseDot" />
+                Visitor Intelligence · Social Referrer Attribution · Competitor Radar
+              </div>
+            )}
 
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl leading-tight">
               Know who visits your website from{" "}
@@ -133,15 +179,25 @@ export default function Home() {
             </h1>
 
             <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed">
-              Connect your LinkedIn, X, Instagram, YouTube, Facebook, Reddit &amp; domain. MQLeads
+              Connect your LinkedIn, X, Instagram, YouTube, Facebook &amp; domain. MQLeads
               reveals the exact profile handles and campaign UTMs behind anonymous visitors, scores their
               intent, and uncovers your competitors&apos; channel gaps.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link href="/register" className="btn-primary w-full sm:w-auto px-8 py-3.5 text-base shadow-lg shadow-indigo-600/25">
-                Start Building Your Pipeline Free
-              </Link>
+              {user ? (
+                <Link
+                  href="/dashboard"
+                  className="btn-primary w-full sm:w-auto px-8 py-3.5 text-base shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
+                >
+                  <span>Go To Your Dashboard</span>
+                  <span>&rarr;</span>
+                </Link>
+              ) : (
+                <Link href="/register" className="btn-primary w-full sm:w-auto px-8 py-3.5 text-base shadow-lg shadow-indigo-600/25">
+                  Start Building Your Pipeline Free
+                </Link>
+              )}
               <a href="#demo" className="btn-secondary w-full sm:w-auto px-6 py-3.5 text-base">
                 Explore Live Demo ↓
               </a>
@@ -283,9 +339,15 @@ export default function Home() {
               Join growth teams and agencies using MQLeads to identify high-intent social visitors and close more deals.
             </p>
             <div className="pt-2">
-              <Link href="/register" className="btn bg-white text-indigo-700 font-bold px-8 py-3.5 text-base hover:bg-indigo-50 shadow-lg">
-                Create Free Workspace Now →
-              </Link>
+              {user ? (
+                <Link href="/dashboard" className="btn bg-white text-indigo-700 font-bold px-8 py-3.5 text-base hover:bg-indigo-50 shadow-lg">
+                  Go To Your Dashboard →
+                </Link>
+              ) : (
+                <Link href="/register" className="btn bg-white text-indigo-700 font-bold px-8 py-3.5 text-base hover:bg-indigo-50 shadow-lg">
+                  Create Free Workspace Now →
+                </Link>
+              )}
             </div>
           </div>
         </section>

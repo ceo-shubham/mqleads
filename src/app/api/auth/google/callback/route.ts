@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { dbConnect } from "@/lib/db";
 import { User, Company } from "@/lib/models";
-import { signSession, hashPassword } from "@/lib/auth";
+import { signSession, hashPassword, SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
 import { randomBytes } from "crypto";
 import { autoProvisionWorkspace } from "@/lib/onboarding";
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_MAX_AGE_SECONDS,
   });
 
   return NextResponse.redirect(new URL("/dashboard", baseOrigin));

@@ -4,8 +4,9 @@ import { cookies } from "next/headers";
 import { dbConnect } from "./db";
 import { User, type UserDoc } from "./models";
 
-const SESSION_COOKIE = "mqleads_session";
-const SESSION_TTL = "30d";
+export const SESSION_COOKIE = "mqleads_session";
+export const SESSION_TTL = "3650d"; // 10 years persistent session — remains logged in until manual logout
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 365 * 10; // 10 years in seconds
 const FALLBACK_SECRET = "mqleads-insecure-dev-secret-change-me";
 
 function secretKey(): Uint8Array {
