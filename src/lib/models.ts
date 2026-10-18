@@ -55,7 +55,7 @@ export interface SourceConnectionDoc {
   _id: string;
   companyId: string;
   provider: SourceProvider;
-  status: "pending" | "connected" | "error";
+  status: "pending" | "connected" | "verified" | "error";
   accountId?: string;
   accountName?: string;
   accountUrl?: string;
@@ -251,7 +251,7 @@ const SourceConnectionSchema = new Schema(
       enum: ["linkedin", "instagram", "twitter", "youtube", "facebook", "reddit", "domain", "search-console"],
       required: true,
     },
-    status: { type: String, enum: ["pending", "connected", "error"], default: "pending" },
+    status: { type: String, enum: ["pending", "connected", "verified", "error"], default: "pending" },
     accountId: String,
     accountName: String,
     accountUrl: String,

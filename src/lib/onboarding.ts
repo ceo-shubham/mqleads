@@ -25,14 +25,14 @@ export async function autoProvisionWorkspace(companyId: unknown, email: string) 
       companyId,
       provider: "domain",
       domain: rawDomain,
-      status: "verified",
+      status: "connected",
       verifiedAt: new Date(),
       verificationToken: randomToken(16),
     });
-  } else if (domainConn.status !== "verified") {
+  } else if (!domainConn.verifiedAt || domainConn.status !== "connected") {
     // Instantly auto-verify without making user configure DNS records
-    domainConn.status = "verified";
-    domainConn.verifiedAt = new Date();
+    domainConn.status = "connected";
+    domainConn.verifiedAt = domainConn.verifiedAt || new Date();
     await domainConn.save();
   }
 

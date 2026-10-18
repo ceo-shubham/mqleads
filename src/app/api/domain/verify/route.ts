@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     checkMeta(conn.domain, conn.verificationToken),
   ]);
 
-  conn.status = "verified";
+  conn.status = "connected";
   conn.verifiedAt = new Date();
   conn.lastError = undefined;
   await conn.save();

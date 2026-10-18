@@ -32,22 +32,22 @@ export async function POST(req: NextRequest) {
   if (existing) {
     existing.domain = domain.toLowerCase();
     existing.verificationToken = randomToken(16);
-    existing.status = "verified";
+    existing.status = "connected";
     existing.verifiedAt = new Date();
     existing.lastError = undefined;
     await existing.save();
-    return json({ ok: true, id: existing._id.toString(), verificationToken: existing.verificationToken, status: "verified" });
+    return json({ ok: true, id: existing._id.toString(), verificationToken: existing.verificationToken, status: "connected" });
   }
 
   const conn = await SourceConnection.create({
     companyId: ctx.company._id,
     provider: "domain",
-    status: "verified",
+    status: "connected",
     verifiedAt: new Date(),
     domain: domain.toLowerCase(),
     verificationToken: randomToken(16),
   });
-  return json({ ok: true, id: conn._id.toString(), verificationToken: conn.verificationToken, status: "verified" }, 201);
+  return json({ ok: true, id: conn._id.toString(), verificationToken: conn.verificationToken, status: "connected" }, 201);
 }
 
 export async function DELETE(req: NextRequest) {
