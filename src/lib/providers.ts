@@ -192,24 +192,39 @@ export const OAUTH_PROVIDERS: Record<SocialProviderId, ProviderConfig> = {
     id: "facebook",
     label: "Facebook",
     shortLabel: "Facebook",
-    description: "Your company Facebook Page.",
+    description: "Your company Facebook Page or presence.",
     color: "#1877f2",
     clientIdEnv: "META_CLIENT_ID",
     clientSecretEnv: "META_CLIENT_SECRET",
     authorizeUrl: `https://www.facebook.com/${META_VERSION}/dialog/oauth`,
     tokenUrl: `https://graph.facebook.com/${META_VERSION}/oauth/access_token`,
-    scopes: ["pages_show_list", "pages_read_engagement"],
+    scopes: ["public_profile"],
     isConfigured: () => hasAll("META_CLIENT_ID", "META_CLIENT_SECRET"),
     missingEnv: () => ["META_CLIENT_ID", "META_CLIENT_SECRET"],
     fetchProfile: async (token) => {
       const res = await fetch(
-        `https://graph.facebook.com/${META_VERSION}/me/accounts?fields=name,id,access_token&access_token=${encodeURIComponent(token)}`
+        `https://graph.facebook.com/${META_VERSION}/me?fields=name,id&access_token=${encodeURIComponent(token)}`
       );
-      if (!res.ok) throw new Error(`Meta /me/accounts failed (${res.status})`);
-      const data = (await res.json()) as { data?: { name: string; id: string; access_token: string }[] };
-      const page = data.data?.[0];
-      if (!page) throw new Error("No Facebook Page found on this account");
-      return { accountId: page.id, accountName: page.name, accountUrl: `https://facebook.com/${page.id}` };
+      if (!res.ok) throw new Error(`Meta /me failed (${res.status})`);
+      const user = (await res.json()) as { name: string; id: string };
+
+      // Also try fetching linked Facebook Page if available
+      try {
+        const pagesRes = await fetch(
+          `https://graph.facebook.com/${META_VERSION}/me/accounts?fields=name,id&access_token=${encodeURIComponent(token)}`
+        );
+        if (pagesRes.ok) {
+          const pData = (await pagesRes.json()) as { data?: { name: string; id: string }[] };
+          const page = pData.data?.[0];
+          if (page) {
+            return { accountId: page.id, accountName: page.name, accountUrl: `https://facebook.com/${page.id}` };
+          }
+        }
+      } catch {
+        /* fallback to profile */
+      }
+
+      return { accountId: user.id, accountName: user.name, accountUrl: `https://facebook.com/${user.id}` };
     },
   },
 
