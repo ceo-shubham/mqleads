@@ -16,8 +16,9 @@ const ALLOWED: SocialProviderId[] = [
 ];
 
 export async function GET(req: NextRequest, { params }: { params: { provider: string } }) {
+  const baseOrigin = process.env.APP_URL?.trim().replace(/\/$/, "") || req.nextUrl.origin;
   const providerId = params.provider as SocialProviderId;
-  const base = new URL("/dashboard/sources", req.url);
+  const base = new URL("/dashboard/sources", baseOrigin);
   const fail = (message: string) => {
     const u = base;
     u.searchParams.set("error", "oauth-failed");
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   const provider = getProvider(providerId)!;
 
   const user = await getSessionUser();
-  if (!user) return NextResponse.redirect(new URL("/login", req.url));
+  if (!user) return NextResponse.redirect(new URL("/login", baseOrigin));
 
   const state = req.nextUrl.searchParams.get("state");
   const code = req.nextUrl.searchParams.get("code");
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   if (new Date(pending.expiresAt).getTime() < Date.now()) return fail("OAuth link expired — please try again.");
   if (pending.companyId.toString() !== company._id.toString()) return fail("Session mismatch — please log in again.");
 
-  const redirectUri = getRedirectUri(req.nextUrl.origin, providerId);
+  const redirectUri = getRedirectUri(baseOrigin, providerId);
   let exchanged: { accessToken: string; refreshToken?: string; expiresIn?: number };
   try {
     exchanged = await exchangeCode(provider, code, redirectUri, pending.codeVerifier);
