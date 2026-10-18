@@ -8,12 +8,16 @@ import { CompetitorsClient, type CompetitorView } from "@/components/Competitors
 
 export const metadata: Metadata = { title: "Competitors Intelligence" };
 
+import { autoProvisionWorkspace } from "@/lib/onboarding";
+
 export default async function CompetitorsPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   await dbConnect();
   const company = await Company.findOne({ userId: user._id }).lean();
   if (!company) redirect("/register");
+
+  await autoProvisionWorkspace(company._id, user.email);
 
   const [competitors, sources] = await Promise.all([
     Competitor.find({ companyId: company._id }).sort({ createdAt: -1 }).lean(),

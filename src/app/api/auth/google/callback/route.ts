@@ -4,6 +4,7 @@ import { dbConnect } from "@/lib/db";
 import { User, Company } from "@/lib/models";
 import { signSession, hashPassword } from "@/lib/auth";
 import { randomBytes } from "crypto";
+import { autoProvisionWorkspace } from "@/lib/onboarding";
 
 export async function GET(req: NextRequest) {
   const baseOrigin = process.env.APP_URL?.trim().replace(/\/$/, "") || req.nextUrl.origin;
@@ -92,10 +93,16 @@ export async function GET(req: NextRequest) {
       email,
       passwordHash,
     });
-    await Company.create({
+    const company = await Company.create({
       userId: user._id,
       name: `${name}'s Workspace`,
     });
+    await autoProvisionWorkspace(company._id, user.email);
+  } else {
+    const company = await Company.findOne({ userId: user._id });
+    if (company) {
+      await autoProvisionWorkspace(company._id, user.email);
+    }
   }
 
   // Set session cookie

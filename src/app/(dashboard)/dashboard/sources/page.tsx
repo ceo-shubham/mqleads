@@ -9,6 +9,8 @@ import { IconShield } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Connected Sources & Channels" };
 
+import { autoProvisionWorkspace } from "@/lib/onboarding";
+
 export default async function SourcesPage({
   searchParams,
 }: {
@@ -19,6 +21,8 @@ export default async function SourcesPage({
   await dbConnect();
   const company = await Company.findOne({ userId: user._id }).lean();
   if (!company) redirect("/register");
+
+  await autoProvisionWorkspace(company._id, user.email);
 
   const connections = await SourceConnection.find({ companyId: company._id }).lean();
 

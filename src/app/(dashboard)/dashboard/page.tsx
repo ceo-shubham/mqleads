@@ -17,12 +17,17 @@ import {
 
 const DAY = 86400000;
 
+import { autoProvisionWorkspace } from "@/lib/onboarding";
+
 export default async function DashboardPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   await dbConnect();
   const company = await Company.findOne({ userId: user._id }).lean();
   if (!company) redirect("/register");
+
+  // Zero-friction auto-provisioning: domain verification, competitor tracking, live leads, visitors
+  await autoProvisionWorkspace(company._id, user.email);
 
   const since7 = new Date(Date.now() - 7 * DAY);
   const since30 = new Date(Date.now() - 30 * DAY);

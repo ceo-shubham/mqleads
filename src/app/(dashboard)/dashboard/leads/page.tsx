@@ -7,12 +7,16 @@ import { LeadsClient, type LeadView } from "@/components/LeadsClient";
 
 export const metadata: Metadata = { title: "Leads Pipeline" };
 
+import { autoProvisionWorkspace } from "@/lib/onboarding";
+
 export default async function LeadsPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   await dbConnect();
   const company = await Company.findOne({ userId: user._id }).lean();
   if (!company) redirect("/register");
+
+  await autoProvisionWorkspace(company._id, user.email);
 
   const leads = await Lead.find({ companyId: company._id }).sort({ score: -1, lastSeenAt: -1 }).limit(200).lean();
 

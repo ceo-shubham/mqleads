@@ -84,6 +84,49 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
     { upsert: true }
   );
 
+  // Auto-link Meta sister platform so user only has to connect once!
+  if (providerId === "facebook") {
+    const igHandle = profile.accountName.includes("@")
+      ? profile.accountName
+      : `@${profile.accountName.toLowerCase().replace(/[^a-z0-9_]/g, "_")}`;
+
+    await SourceConnection.findOneAndUpdate(
+      { companyId: pending.companyId, provider: "instagram" },
+      {
+        $set: {
+          status: "connected",
+          accountId: profile.accountId,
+          accountName: igHandle,
+          accountUrl: "https://instagram.com/",
+          accessTokenEnc: encrypt(exchanged.accessToken),
+          refreshTokenEnc: exchanged.refreshToken ? encrypt(exchanged.refreshToken) : undefined,
+          tokenExpiresAt: exchanged.expiresIn ? new Date(Date.now() + exchanged.expiresIn * 1000) : undefined,
+          scopes: ["public_profile"],
+          lastError: undefined,
+        },
+      },
+      { upsert: true }
+    );
+  } else if (providerId === "instagram") {
+    await SourceConnection.findOneAndUpdate(
+      { companyId: pending.companyId, provider: "facebook" },
+      {
+        $set: {
+          status: "connected",
+          accountId: profile.accountId,
+          accountName: profile.accountName.replace(/^@/, ""),
+          accountUrl: "https://facebook.com/",
+          accessTokenEnc: encrypt(exchanged.accessToken),
+          refreshTokenEnc: exchanged.refreshToken ? encrypt(exchanged.refreshToken) : undefined,
+          tokenExpiresAt: exchanged.expiresIn ? new Date(Date.now() + exchanged.expiresIn * 1000) : undefined,
+          scopes: ["public_profile"],
+          lastError: undefined,
+        },
+      },
+      { upsert: true }
+    );
+  }
+
   await PendingAuth.updateOne({ _id: pending._id }, { $set: { consumedAt: new Date() } });
 
   const u = base;

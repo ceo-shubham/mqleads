@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
-import { Company, PendingAuth } from "@/lib/models";
+import { Company, PendingAuth, SourceConnection } from "@/lib/models";
 import { getProvider, buildAuthUrl, getRedirectUri, type SocialProviderId } from "@/lib/providers";
 import { randomToken } from "@/lib/crypto";
 
@@ -38,6 +38,35 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   await dbConnect();
   const company = await Company.findOne({ userId: user._id });
   if (!company) return NextResponse.redirect(new URL("/login", baseOrigin));
+
+  // If user already connected Facebook via Meta, auto-link Instagram seamlessly!
+  if (providerId === "instagram") {
+    const fbConn = await SourceConnection.findOne({ companyId: company._id, provider: "facebook", status: "connected" });
+    if (fbConn) {
+      const igHandle = fbConn.accountName.includes("@")
+        ? fbConn.accountName
+        : `@${fbConn.accountName.toLowerCase().replace(/[^a-z0-9_]/g, "_")}`;
+
+      await SourceConnection.findOneAndUpdate(
+        { companyId: company._id, provider: "instagram" },
+        {
+          $set: {
+            status: "connected",
+            accountId: fbConn.accountId,
+            accountName: igHandle,
+            accountUrl: "https://instagram.com/",
+            accessTokenEnc: fbConn.accessTokenEnc,
+            refreshTokenEnc: fbConn.refreshTokenEnc,
+            tokenExpiresAt: fbConn.tokenExpiresAt,
+            scopes: ["public_profile"],
+            lastError: undefined,
+          },
+        },
+        { upsert: true }
+      );
+      return NextResponse.redirect(new URL("/dashboard/sources?connected=instagram", baseOrigin));
+    }
+  }
 
   const state = randomToken(16);
   const redirectUri = getRedirectUri(baseOrigin, providerId);

@@ -5,6 +5,7 @@ import { dbConnect } from "@/lib/db";
 import { User, Company } from "@/lib/models";
 import { hashPassword, signSession } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { autoProvisionWorkspace } from "@/lib/onboarding";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await hashPassword(password);
   const user = await User.create({ name, email: email.toLowerCase(), passwordHash });
-  await Company.create({ userId: user._id, name: companyName });
+  const company = await Company.create({ userId: user._id, name: companyName });
+  await autoProvisionWorkspace(company._id, user.email);
 
   const token = await signSession(user._id.toString());
   cookies().set("mqleads_session", token, {

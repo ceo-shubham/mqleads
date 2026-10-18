@@ -19,12 +19,16 @@ function appOrigin(): string {
   return `${proto}://${host}`;
 }
 
+import { autoProvisionWorkspace } from "@/lib/onboarding";
+
 export default async function TrackingPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   await dbConnect();
   const company = await Company.findOne({ userId: user._id }).lean();
   if (!company) redirect("/register");
+
+  await autoProvisionWorkspace(company._id, user.email);
 
   const conn = await SourceConnection.findOne({ companyId: company._id, provider: "domain" }).lean();
   const origin = appOrigin();
