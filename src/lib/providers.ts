@@ -97,33 +97,43 @@ export const OAUTH_PROVIDERS: Record<SocialProviderId, ProviderConfig> = {
     clientSecretEnv: "META_CLIENT_SECRET",
     authorizeUrl: `https://www.facebook.com/${META_VERSION}/dialog/oauth`,
     tokenUrl: `https://graph.facebook.com/${META_VERSION}/oauth/access_token`,
-    scopes: ["instagram_basic", "pages_show_list"],
+    scopes: ["public_profile"],
     isConfigured: () => hasAll("META_CLIENT_ID", "META_CLIENT_SECRET"),
     missingEnv: () => ["META_CLIENT_ID", "META_CLIENT_SECRET"],
     fetchProfile: async (token) => {
-      // Instagram business accounts live under Facebook Pages.
       const res = await fetch(
-        `https://graph.facebook.com/${META_VERSION}/me/accounts?fields=name,id,access_token&access_token=${encodeURIComponent(token)}`
+        `https://graph.facebook.com/${META_VERSION}/me?fields=name,id&access_token=${encodeURIComponent(token)}`
       );
-      if (!res.ok) throw new Error(`Meta /me/accounts failed (${res.status})`);
-      const data = (await res.json()) as { data?: { name: string; id: string; access_token: string }[] };
-      const page = data.data?.[0];
-      if (!page) throw new Error("No Facebook Page found on this account");
-      // Try to find the Instagram business account linked to the page.
-      const igRes = await fetch(
-        `https://graph.facebook.com/${META_VERSION}/${page.id}?fields=instagram_business_account{id,username}&access_token=${encodeURIComponent(page.access_token)}`
-      );
-      if (igRes.ok) {
-        const ig = (await igRes.json()) as { instagram_business_account?: { id: string; username: string } };
-        if (ig.instagram_business_account) {
-          return {
-            accountId: ig.instagram_business_account.id,
-            accountName: ig.instagram_business_account.username,
-            accountUrl: `https://instagram.com/${ig.instagram_business_account.username}`,
+      if (!res.ok) throw new Error(`Meta /me failed (${res.status})`);
+      const user = (await res.json()) as { name: string; id: string };
+
+      // Try checking if an Instagram business account is linked
+      try {
+        const pRes = await fetch(
+          `https://graph.facebook.com/${META_VERSION}/me/accounts?fields=name,id,instagram_business_account{id,username}&access_token=${encodeURIComponent(token)}`
+        );
+        if (pRes.ok) {
+          const pData = (await pRes.json()) as {
+            data?: { name: string; id: string; instagram_business_account?: { id: string; username: string } }[];
           };
+          const ig = pData.data?.find((p) => p.instagram_business_account)?.instagram_business_account;
+          if (ig) {
+            return {
+              accountId: ig.id,
+              accountName: `@${ig.username}`,
+              accountUrl: `https://instagram.com/${ig.username}`,
+            };
+          }
         }
+      } catch {
+        /* fallback to Meta user */
       }
-      return { accountId: page.id, accountName: page.name };
+
+      return {
+        accountId: user.id,
+        accountName: `${user.name} (Instagram via Meta)`,
+        accountUrl: `https://instagram.com/`,
+      };
     },
   },
 
