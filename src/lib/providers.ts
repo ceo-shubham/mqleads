@@ -374,7 +374,6 @@ export const SOCIAL_PROVIDERS: SocialProviderId[] = [
   "twitter",
   "youtube",
   "facebook",
-  "reddit",
 ];
 
 // ---------------------------------------------------------------------------
