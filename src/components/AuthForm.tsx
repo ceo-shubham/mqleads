@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "./Logo";
-import { IconEye, IconEyeOff } from "./icons";
+import { IconEye, IconEyeOff, BrandGoogle } from "./icons";
 import { useToast } from "./Toast";
 
 type Mode = "login" | "register";
@@ -16,6 +16,17 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlErr = params.get("error");
+      if (urlErr) {
+        setError(urlErr);
+        showToast("Authentication Notice", urlErr, "error");
+      }
+    }
+  }, [showToast]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -84,6 +95,26 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="card p-6 sm:p-8 shadow-xl border-slate-200">
+          {/* Continue with Google */}
+          <a
+            href="/api/auth/google"
+            className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:border-slate-400 transition-all group"
+          >
+            <BrandGoogle className="h-5 w-5 transition-transform group-hover:scale-105" />
+            <span>Continue with Google</span>
+          </a>
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-3 text-slate-400 font-semibold tracking-wider">
+                or continue with email
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={onSubmit} className="space-y-4">
             {!isLogin && (
               <div>
